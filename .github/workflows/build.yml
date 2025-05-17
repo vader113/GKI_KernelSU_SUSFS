@@ -30,6 +30,10 @@ on:
       revision:
         required: false
         type: string
+      include_selinux_permissive:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build-gki:
