@@ -36,6 +36,11 @@ on:
         required: true
         type: boolean
         default: false
+      include_selinux_permissive:
+        description: 'Force SELinux Permissive?'
+        required: true
+        type: boolean
+        default: false
       kernelsu_branch:
         description: "Choose ksu branch"
         required: true
@@ -78,6 +83,7 @@ jobs:
       kernelsu_variant: ${{ matrix.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
+      include_selinux_permissive: ${{ inputs.include_selinux_permissive }}
 
   release:
     if: ${{ inputs.release_type == 'Release' || inputs.release_type == 'Pre-Release' }}
