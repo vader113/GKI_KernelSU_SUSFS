@@ -316,6 +316,25 @@ jobs:
             sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Wild"/' ./common/arch/arm64/configs/gki_defconfig
           fi
 
+      - name: Force SELinux Permissive (if enabled)
+        if: ${{ inputs.include_selinux_permissive }}
+        run: | 
+          DEFCONFIG_FILE=$(find arch/arm64/configs -name "*defconfig" | head -n1)
+          if [ -z "$DEFCONFIG_FILE" ]; then
+          echo "❌ Could not locate defconfig. Exiting."
+          exit 1
+          fi
+          echo "🔧 Patching $DEFCONFIG_FILE for SELinux permissive..."
+          sed -i 's/CONFIG_SECURITY_SELINUX_DISABLE=y/# CONFIG_SECURITY_SELINUX_DISABLE is not set/' "$DEFCONFIG_FILE" || true
+          sed -i 's/CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=.*/CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=0/' "$DEFCONFIG_FILE" || true  
+          echo "CONFIG_SECURITY_SELINUX=y" >> "$DEFCONFIG_FILE"
+          echo "CONFIG_SECURITY_SELINUX_BOOTPARAM=y" >> "$DEFCONFIG_FILE"
+          echo "CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=0" >> "$DEFCONFIG_FILE"
+          echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> "$DEFCONFIG_FILE"
+
+          echo "✅ SELinux will be built as permissive."
+
+
       - name: Build
         run : |
           set -e
