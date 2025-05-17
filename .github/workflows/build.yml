@@ -319,24 +319,23 @@ jobs:
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
             sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Wild"/' ./common/arch/arm64/configs/gki_defconfig
           fi
-
-      - name: Force SELinux Permissive (if enabled)
+          
+      - name: Force SELinux Permissive in Kernel Source
         if: ${{ inputs.include_selinux_permissive }}
-        run: | 
-          DEFCONFIG_FILE=$(find arch/arm64/configs -name "*defconfig" | head -n1)
-          if [ -z "$DEFCONFIG_FILE" ]; then
-          echo "❌ Could not locate defconfig. Exiting."
-          exit 1
+        run: |
+          echo "🔧 Patching kernel source to force SELinux permissive mode..."
+          FILE="security/selinux/hooks.c"
+          if grep -q 'selinux_enforcing' "$FILE"; then
+          sed -i 's/\<selinux_enforcing\>\s*=\s*1/selinux_enforcing = 0/g' "$FILE"
+          echo "✅ Patched selinux_enforcing = 0 in $FILE"
+          else
+          echo "⚠️ Could not find 'selinux_enforcing = 1' in $FILE"
           fi
-          echo "🔧 Patching $DEFCONFIG_FILE for SELinux permissive..."
-          sed -i 's/CONFIG_SECURITY_SELINUX_DISABLE=y/# CONFIG_SECURITY_SELINUX_DISABLE is not set/' "$DEFCONFIG_FILE" || true
-          sed -i 's/CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=.*/CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=0/' "$DEFCONFIG_FILE" || true  
-          echo "CONFIG_SECURITY_SELINUX=y" >> "$DEFCONFIG_FILE"
-          echo "CONFIG_SECURITY_SELINUX_BOOTPARAM=y" >> "$DEFCONFIG_FILE"
-          echo "CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=0" >> "$DEFCONFIG_FILE"
-          echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> "$DEFCONFIG_FILE"
+          if grep -q 'enforcing_enabled' "$FILE"; then
+          sed -i 's/enforcing_enabled\s*=\s*1/enforcing_enabled = 0/g' "$FILE"
+          echo "✅ Patched enforcing_enabled = 0 in $FILE"
+          fi
 
-          echo "✅ SELinux will be built as permissive."
 
 
       - name: Build
