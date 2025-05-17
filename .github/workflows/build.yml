@@ -194,55 +194,6 @@ jobs:
               curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
               ;;
           esac
-          
-      - name: Apply SUSFS Patches for KernelSU Variants
-        run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG"
-          
-          echo "Applying SUSFS patches..."
-          
-          # Copy SUSFS patches
-          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
-          cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
-          cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-          
-          case "${{ inputs.kernelsu_variant }}" in
-            "WILD")
-              echo "Applying SUSFS patches for Official KernelSU..."
-              cd ./KernelSU
-              cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
-              patch -p1 --forward --fuzz=3 < 10_enable_susfs_for_ksu.patch || true
-              cp ../../kernel_patches/wild/fix.corehook.c.patch ./
-              patch -p1 --forward --fuzz=3 < fix.corehook.c.patch
-              cp ../../kernel_patches/wild/fix.selinux.c.patch ./
-              patch -p1 --forward --fuzz=3 < fix.selinux.c.patch
-              cp ../../kernel_patches/wild/fix.sucompat.c.patch ./
-              patch -p1 --forward --fuzz=3 < fix.sucompat.c.patch
-              sed -i '/bool ksu_devpts_hook = false;/d' ./kernel/sucompat.c
-              ;;
-            "KSU")
-              echo "Applying SUSFS patches for Official KernelSU..."
-              cd ./KernelSU
-              cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
-              patch -p1 --forward --fuzz=3 < 10_enable_susfs_for_ksu.patch
-              ;;
-            "NEXT")
-              echo "Applying SUSFS patches for KernelSU Next..."
-              cd ./KernelSU-Next
-              cp ../../kernel_patches/next/kernel-patch-susfs-v1.5.7-to-KernelSU-Next.patch ./
-              patch -p1 --forward --fuzz=3 < kernel-patch-susfs-v1.5.7-to-KernelSU-Next.patch
-              ;;
-            "MKSU")
-              echo "Applying SUSFS patches for MKSU..."
-              cd ./KernelSU
-              cp ../../kernel_patches/next/kernel-patch-susfs-v1.5.7-to-KernelSU-Next.patch ./
-              patch -p1 --forward --fuzz=3 < kernel-patch-susfs-v1.5.7-to-KernelSU-Next.patch
-              ;;
-          esac
-
-          cd ../common
-          patch -p1 --fuzz=3 < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch || true
 
       - name: Apply Hooks Patches
         run: |
